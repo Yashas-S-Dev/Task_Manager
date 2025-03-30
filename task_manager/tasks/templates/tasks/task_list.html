@@ -1,0 +1,162 @@
+{% extends 'tasks/base.html' %}
+{% block content %}
+<!-- 🔍 Search and Filter Bar -->
+<form id="search-filter-form" method="GET" class="mb-3 d-flex align-items-center gap-2">
+    <input type="text" name="search" id="search-input" class="form-control" placeholder="🔍 Search tasks..." value="{{ request.GET.search }}">
+
+    <!-- Category Filter -->
+    <select name="category" id="category-filter" class="form-select">
+        <option value="">📂 All Categories</option>
+        {% for category in categories %}
+            <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>
+                {{ category.name }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <!-- Status Filter -->
+    <select name="status" id="status-filter" class="form-select">
+        <option value="">📌 All Status</option>
+        <option value="completed" {% if request.GET.status == "completed" %}selected{% endif %}>✅ Completed</option>
+        <option value="pending" {% if request.GET.status == "pending" %}selected{% endif %}>⏳ Pending</option>
+    </select>
+
+    <!-- 🔍 Search Button (This was missing) -->
+    <button type="submit" class="btn btn-primary">🔎 Search</button>
+
+    <!-- Reset Button -->
+    <button type="button" id="reset-btn" class="btn btn-secondary">♻ Reset</button>
+</form>
+
+
+
+<h2 class="text-center text-primary">Task List</h2>
+
+<!-- 🆕 New Task Button -->
+<button type="button" class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#taskModal">
+    ➕ New Task
+</button>
+
+<!-- 📌 Task Creation Modal -->
+<div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="taskModalLabel">Add New Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Title:</label>
+                        {{ form.title }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Description:</label>
+                        {{ form.description }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Priority:</label>
+                        {{ form.priority }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Due Date:</label>
+                        {{ form.due_date }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Completed:</label>
+                        {{ form.completed }}
+                    </div>
+
+                    <!-- 📌 Categories Selection -->
+                    <div class="mb-3">
+                        <label class="form-label">Categories:</label>
+                        <div class="border p-2">
+                            {% for category in form.categories %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="categories" value="{{ category.data.value }}" id="category_{{ forloop.counter }}">
+                                    <label class="form-check-label" for="category_{{ forloop.counter }}">
+                                        {{ category.choice_label }}
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- ➕ Create New Category -->
+                    <div class="mb-3">
+                        <label for="new_category" class="form-label">Create New Category:</label>
+                        <input type="text" name="new_category" id="new_category" class="form-control" placeholder="Enter new category">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Save Task</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<hr>
+
+<!-- 📌 Display Tasks -->
+<div class="row">
+    {% for task in tasks %}
+    <div class="col-md-6">
+        <div class="card mb-3 shadow-sm animated-task">
+            <div class="card-body">
+                <h5 class="card-title">{{ task.title }}</h5>
+                <p class="card-text">{{ task.description }}</p>
+                <p class="badge bg-warning text-dark">Priority: {{ task.priority }}</p>
+                <p class="badge bg-info text-white">Due: {{ task.due_date }}</p>
+                <p>Status: 
+                    {% if task.completed %} ✅ <span class="text-success">Completed</span> 
+                    {% else %} ⏳ <span class="text-danger">Pending</span> 
+                    {% endif %}
+                </p>
+
+                <p>Categories: 
+                    {% for category in task.categories.all %}
+                        <span class="badge bg-secondary">{{ category.name }}</span>
+                    {% empty %}
+                        <span class="text-muted">No categories</span>
+                    {% endfor %}
+                </p>
+
+                <a href="{% url 'edit_task' task.id %}" class="btn btn-primary btn-sm">✏ Edit</a>
+                <a href="{% url 'delete_task' task.id %}" class="btn btn-danger btn-sm delete-task" data-task-id="{{ task.id }}">🗑 Delete</a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+        <p class="text-center text-muted">No tasks available.</p>
+    {% endfor %}
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let form = document.getElementById("search-filter-form");
+    
+        // Apply filters instantly when dropdown changes
+        document.getElementById("category-filter").addEventListener("change", function () {
+            form.submit();
+        });
+    
+        document.getElementById("status-filter").addEventListener("change", function () {
+            form.submit();
+        });
+    
+        // Reset filters and search
+        document.getElementById("reset-btn").addEventListener("click", function () {
+            document.getElementById("search-input").value = "";
+            document.getElementById("category-filter").value = "";
+            document.getElementById("status-filter").value = "";
+            form.submit();
+        });
+    });
+    </script>
+    
+{% endblock %}
