@@ -1,0 +1,38 @@
+{% extends 'tasks/base.html' %}
+{% block content %}
+
+<h2>Edit Task</h2>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <label>Title:</label> {{ form.title }}
+    <label>Description:</label> {{ form.description }}
+    <label>Priority:</label> {{ form.priority }}
+    <label>Due Date:</label> {{ form.due_date }}
+    <label>Completed:</label> {{ form.completed }}
+
+    <!-- 🏷 Categories Selection (checkboxes) -->
+    <label>Categories:</label>
+    <div>
+        {% for category in categories %}
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="categories" value="{{ category.id }}" 
+                    {% if category in task.categories.all %} checked {% endif %}>
+                <label class="form-check-label">
+                    {{ category.name }}
+                </label>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- ➕ New Category Input -->
+    <label for="new_category">Create New Category:</label>
+    <input type="text" name="new_category" id="new_category" placeholder="Enter new category">
+
+    <button type="submit" class="btn btn-success mt-3">Save Changes</button>
+</form>
+
+<a href="{% url 'task_list' %}" class="btn btn-secondary mt-2">Back to Task List</a>
+
+{% endblock %}
